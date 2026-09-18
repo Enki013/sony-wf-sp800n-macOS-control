@@ -48,13 +48,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if popover.isShown {
             popover.performClose(nil)
         } else {
-            if !bluetooth.state.isConnected {
-                bluetooth.refreshStatus()
-            }
             popoverContent.syncUI(with: bluetooth.state)
-            
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             popover.contentViewController?.view.window?.makeKey()
+
+            if !bluetooth.state.isConnected {
+                DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                    self?.bluetooth.refreshStatus()
+                }
+            }
         }
     }
 }

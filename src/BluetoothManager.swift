@@ -13,7 +13,7 @@ class BluetoothManager: NSObject, ObservableObject, IOBluetoothRFCOMMChannelDele
     
     var targetAddress = "94-db-56-63-a6-96"
     var isConnecting = false
-    var connectionTimer: Timer?
+    var connectionTimeoutWorkItem: DispatchWorkItem?
     var lastUserActionTime: Date = Date.distantPast
     
     func logDebug(_ text: String) {
@@ -50,11 +50,11 @@ class BluetoothManager: NSObject, ObservableObject, IOBluetoothRFCOMMChannelDele
         state.isConnected = false
         onStateUpdate?(state)
         
-        connectionTimer?.invalidate()
-        connectionTimer = Timer.scheduledTimer(withTimeInterval: 7.0, repeats: false) { [weak self] _ in
+        connectionTimeoutWorkItem?.cancel()
+        let timeoutWorkItem = DispatchWorkItem { [weak self] in
             guard let self = self else { return }
             if self.channel == nil || !self.channel!.isOpen() {
-                self.logDebug("connectionTimer timed out waiting for channel open")
+                self.logDebug("connection timeout waiting for channel open")
                 print("[\u{23F1}\u{FE0F}] RFCOMM bağlantısı zaman aşımına uğradı.")
                 self.isConnecting = false
                 self.state.isConnected = false
@@ -63,13 +63,15 @@ class BluetoothManager: NSObject, ObservableObject, IOBluetoothRFCOMMChannelDele
                 }
             }
         }
+        connectionTimeoutWorkItem = timeoutWorkItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + 7.0, execute: timeoutWorkItem)
         
         // Find device
         guard let dev = IOBluetoothDevice(addressString: targetAddress) else {
             logDebug("Device address not found: \(targetAddress)")
             print("[\u{274C}] Cihaz adresi bulunamadı.")
             isConnecting = false
-            connectionTimer?.invalidate()
+            connectionTimeoutWorkItem?.cancel()
             return
         }
         self.device = dev
@@ -82,7 +84,7 @@ class BluetoothManager: NSObject, ObservableObject, IOBluetoothRFCOMMChannelDele
                 logDebug("dev.openConnection failed: \(res)")
                 print("[\u{274C}] Cihaza bağlanılamadı: \(res)")
                 isConnecting = false
-                connectionTimer?.invalidate()
+                connectionTimeoutWorkItem?.cancel()
                 return
             }
         }
@@ -96,7 +98,7 @@ class BluetoothManager: NSObject, ObservableObject, IOBluetoothRFCOMMChannelDele
             logDebug("openRFCOMMChannelAsync failed: \(openRes)")
             print("[\u{274C}] openRFCOMMChannelAsync başarısız: \(openRes)")
             isConnecting = false
-            connectionTimer?.invalidate()
+            connectionTimeoutWorkItem?.cancel()
         }
     }
     
@@ -137,8 +139,8 @@ class BluetoothManager: NSObject, ObservableObject, IOBluetoothRFCOMMChannelDele
     
     // RFCOMM Delegate Callbacks
     func rfcommChannelOpenComplete(_ rfcommChannel: IOBluetoothRFCOMMChannel?, status error: IOReturn) {
-        connectionTimer?.invalidate()
-        connectionTimer = nil
+        connectionTimeoutWorkItem?.cancel()
+        connectionTimeoutWorkItem = nil
         isConnecting = false
         if error == kIOReturnSuccess, let ch = rfcommChannel {
             logDebug("RFCOMM Channel 9 Open Success!")
@@ -166,8 +168,8 @@ class BluetoothManager: NSObject, ObservableObject, IOBluetoothRFCOMMChannelDele
     func rfcommChannelClosed(_ rfcommChannel: IOBluetoothRFCOMMChannel?) {
         logDebug("RFCOMM Channel Closed")
         print("[\u{1F51A}] RFCOMM Kanalı Kapandı.")
-        connectionTimer?.invalidate()
-        connectionTimer = nil
+        connectionTimeoutWorkItem?.cancel()
+        connectionTimeoutWorkItem = nil
         self.channel = nil
         self.state.isConnected = false
         DispatchQueue.main.async {
