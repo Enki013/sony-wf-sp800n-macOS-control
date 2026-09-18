@@ -1,0 +1,4 @@
+.DS_Store
+SonyControl.app/
+*.log
+__pycache__/
