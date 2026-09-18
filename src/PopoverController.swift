@@ -143,7 +143,7 @@ class PopoverController: NSViewController {
         sliderContainer.spacing = 6
         sliderContainer.wantsLayer = true
         sliderContainer.layer?.cornerRadius = 8
-        sliderContainer.layer?.backgroundColor = NSColor.controlBackgroundColor.withAlphaComponent(0.4).cgColor
+        sliderContainer.layer?.backgroundColor = panelBackgroundColor().cgColor
         sliderContainer.edgeInsets = NSEdgeInsets(top: 10, left: 12, bottom: 10, right: 12)
         sliderContainer.widthAnchor.constraint(equalToConstant: 274).isActive = true
         
@@ -225,7 +225,7 @@ class PopoverController: NSViewController {
         cbBox.spacing = 4
         cbBox.wantsLayer = true
         cbBox.layer?.cornerRadius = 8
-        cbBox.layer?.backgroundColor = NSColor.controlBackgroundColor.withAlphaComponent(0.4).cgColor
+        cbBox.layer?.backgroundColor = panelBackgroundColor().cgColor
         cbBox.edgeInsets = NSEdgeInsets(top: 8, left: 12, bottom: 8, right: 12)
         cbBox.widthAnchor.constraint(equalToConstant: 274).isActive = true
         
@@ -269,7 +269,7 @@ class PopoverController: NSViewController {
         card.edgeInsets = NSEdgeInsets(top: 8, left: 4, bottom: 8, right: 4)
         card.wantsLayer = true
         card.layer?.cornerRadius = 6
-        card.layer?.backgroundColor = NSColor.controlBackgroundColor.withAlphaComponent(0.4).cgColor
+        card.layer?.backgroundColor = panelBackgroundColor().cgColor
         
         let titleLabel = NSTextField(labelWithString: title)
         titleLabel.font = NSFont.systemFont(ofSize: 9, weight: .medium)
@@ -290,6 +290,13 @@ class PopoverController: NSViewController {
         card.addArrangedSubview(iconView)
         card.addArrangedSubview(valueLabel)
         return (card, valueLabel)
+    }
+
+    private func panelBackgroundColor() -> NSColor {
+        let isDarkMode = view.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        return isDarkMode
+            ? NSColor(calibratedWhite: 0.16, alpha: 0.82)
+            : NSColor(calibratedWhite: 1.0, alpha: 0.42)
     }
     
     func makeDivider() -> NSBox {
