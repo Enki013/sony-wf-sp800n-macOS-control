@@ -2,6 +2,8 @@
 
 macOS menu bar app for controlling Sony WF-SP800N headphones over Bluetooth.
 
+![Sony WF-SP800N Control](screenshot.png)
+
 ## Build
 
 Requirements:
