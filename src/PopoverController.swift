@@ -1,6 +1,15 @@
 import AppKit
 import Foundation
 
+private final class AppearanceAwareVisualEffectView: NSVisualEffectView {
+    var onAppearanceChange: (() -> Void)?
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        onAppearanceChange?()
+    }
+}
+
 class PopoverController: NSViewController {
     let bt = BluetoothManager.shared
     
@@ -20,15 +29,24 @@ class PopoverController: NSViewController {
     
     var ncDebounceTimer: Timer?
     var cbDebounceTimer: Timer?
+    private var panelViews: [NSView] = []
     
     override func loadView() {
-        let view = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: 310, height: 460))
+        let view = AppearanceAwareVisualEffectView(frame: NSRect(x: 0, y: 0, width: 310, height: 460))
         view.material = .popover
         view.blendingMode = .behindWindow
         view.state = .active
+        view.onAppearanceChange = { [weak self] in
+            self?.refreshPanelBackgrounds()
+        }
         self.view = view
         
         setupUI()
+    }
+
+    private func refreshPanelBackgrounds() {
+        let backgroundColor = panelBackgroundColor().cgColor
+        panelViews.forEach { $0.layer?.backgroundColor = backgroundColor }
     }
     
     func setupUI() {
@@ -144,6 +162,7 @@ class PopoverController: NSViewController {
         sliderContainer.wantsLayer = true
         sliderContainer.layer?.cornerRadius = 8
         sliderContainer.layer?.backgroundColor = panelBackgroundColor().cgColor
+        panelViews.append(sliderContainer)
         sliderContainer.edgeInsets = NSEdgeInsets(top: 10, left: 12, bottom: 10, right: 12)
         sliderContainer.widthAnchor.constraint(equalToConstant: 274).isActive = true
         
@@ -226,6 +245,7 @@ class PopoverController: NSViewController {
         cbBox.wantsLayer = true
         cbBox.layer?.cornerRadius = 8
         cbBox.layer?.backgroundColor = panelBackgroundColor().cgColor
+        panelViews.append(cbBox)
         cbBox.edgeInsets = NSEdgeInsets(top: 8, left: 12, bottom: 8, right: 12)
         cbBox.widthAnchor.constraint(equalToConstant: 274).isActive = true
         
@@ -270,6 +290,7 @@ class PopoverController: NSViewController {
         card.wantsLayer = true
         card.layer?.cornerRadius = 6
         card.layer?.backgroundColor = panelBackgroundColor().cgColor
+        panelViews.append(card)
         
         let titleLabel = NSTextField(labelWithString: title)
         titleLabel.font = NSFont.systemFont(ofSize: 9, weight: .medium)
@@ -293,10 +314,7 @@ class PopoverController: NSViewController {
     }
 
     private func panelBackgroundColor() -> NSColor {
-        let isDarkMode = view.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-        return isDarkMode
-            ? NSColor(calibratedWhite: 0.16, alpha: 0.82)
-            : NSColor(calibratedWhite: 1.0, alpha: 0.42)
+        return NSColor.controlBackgroundColor.withAlphaComponent(0.88)
     }
     
     func makeDivider() -> NSBox {
