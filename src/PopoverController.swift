@@ -14,9 +14,13 @@ class PopoverController: NSViewController {
     let bt = BluetoothManager.shared
     
     var statusTextLabel: NSTextField!
+    var statusIconView: NSImageView!
     var leftBatLabel: NSTextField!
     var rightBatLabel: NSTextField!
     var caseBatLabel: NSTextField!
+    var leftBatteryIcon: NSImageView!
+    var rightBatteryIcon: NSImageView!
+    var caseBatteryIcon: NSImageView!
     
     var masterSwitch: NSSwitch!
     var ncStatusLabel: NSTextField!
@@ -90,13 +94,27 @@ class PopoverController: NSViewController {
         statusTextLabel = NSTextField(labelWithString: L10n.text("connecting"))
         statusTextLabel.font = NSFont.systemFont(ofSize: 11)
         statusTextLabel.textColor = .secondaryLabelColor
+
+        statusIconView = NSImageView()
+        statusIconView.imageScaling = .scaleProportionallyUpOrDown
+        statusIconView.widthAnchor.constraint(equalToConstant: 10).isActive = true
+        statusIconView.heightAnchor.constraint(equalToConstant: 10).isActive = true
+
+        let statusRow = NSStackView()
+        statusRow.orientation = .horizontal
+        statusRow.alignment = .centerY
+        statusRow.spacing = 3
+        statusRow.addArrangedSubview(statusIconView)
+        statusRow.addArrangedSubview(statusTextLabel)
         
         titleStack.addArrangedSubview(titleLabel)
-        titleStack.addArrangedSubview(statusTextLabel)
+        titleStack.addArrangedSubview(statusRow)
         
         let refreshImg = NSImage(systemSymbolName: "arrow.clockwise", accessibilityDescription: L10n.text("refresh")) ?? NSImage()
         let refreshBtn = NSButton(image: refreshImg, target: self, action: #selector(onRefresh))
         refreshBtn.isBordered = false
+        refreshBtn.widthAnchor.constraint(equalToConstant: 24).isActive = true
+        refreshBtn.heightAnchor.constraint(equalToConstant: 24).isActive = true
         refreshBtn.toolTip = L10n.text("refreshReconnect")
         
         let spacer = NSView()
@@ -117,12 +135,15 @@ class PopoverController: NSViewController {
         batStack.spacing = 6
         batStack.widthAnchor.constraint(equalToConstant: 274).isActive = true
         
-        let leftCard = makeBatteryCard(title: L10n.text("leftEarbud"), imageName: "wf_sp800n_color_00_01_left")
+        let leftCard = makeBatteryCard(imageName: "wf_sp800n_color_00_01_left", indicatorSymbolName: "l.circle.fill")
         leftBatLabel = leftCard.1
-        let rightCard = makeBatteryCard(title: L10n.text("rightEarbud"), imageName: "wf_sp800n_color_00_01_right")
+        leftBatteryIcon = leftCard.2
+        let rightCard = makeBatteryCard(imageName: "wf_sp800n_color_00_01_right", indicatorSymbolName: "r.circle.fill")
         rightBatLabel = rightCard.1
-        let caseCard = makeBatteryCard(title: L10n.text("chargingCase"), imageName: "wf_sp800n_color_00_01_cradle")
+        rightBatteryIcon = rightCard.2
+        let caseCard = makeBatteryCard(imageName: "wf_sp800n_color_00_01_cradle", indicatorSymbolName: "c.circle.fill")
         caseBatLabel = caseCard.1
+        caseBatteryIcon = caseCard.2
         
         batStack.addArrangedSubview(leftCard.0)
         batStack.addArrangedSubview(rightCard.0)
@@ -163,7 +184,7 @@ class PopoverController: NSViewController {
         sliderContainer.layer?.cornerRadius = 8
         sliderContainer.layer?.backgroundColor = panelBackgroundColor().cgColor
         panelViews.append(sliderContainer)
-        sliderContainer.edgeInsets = NSEdgeInsets(top: 10, left: 12, bottom: 10, right: 12)
+        sliderContainer.edgeInsets = NSEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
         sliderContainer.widthAnchor.constraint(equalToConstant: 274).isActive = true
         
         ncStatusLabel = NSTextField(labelWithString: L10n.text("noiseCancelling"))
@@ -174,11 +195,11 @@ class PopoverController: NSViewController {
         ncSlider.isContinuous = true
         ncSlider.numberOfTickMarks = 21
         ncSlider.allowsTickMarkValuesOnly = true
-        ncSlider.widthAnchor.constraint(equalToConstant: 250).isActive = true
+        ncSlider.widthAnchor.constraint(equalToConstant: 242).isActive = true
         
         let sliderLabels = NSStackView()
         sliderLabels.orientation = .horizontal
-        sliderLabels.widthAnchor.constraint(equalToConstant: 250).isActive = true
+        sliderLabels.widthAnchor.constraint(equalToConstant: 242).isActive = true
         let lblMin = NSTextField(labelWithString: L10n.text("noiseCancellingShort"))
         lblMin.font = NSFont.systemFont(ofSize: 9)
         lblMin.textColor = .secondaryLabelColor
@@ -200,7 +221,12 @@ class PopoverController: NSViewController {
         // Sese Odaklan (Voice Focus)
         voiceFocusCheckbox = NSButton(checkboxWithTitle: L10n.text("voiceFocus"), target: self, action: #selector(onVFToggled(_:)))
         voiceFocusCheckbox.font = NSFont.systemFont(ofSize: 11)
-        mainStack.addArrangedSubview(voiceFocusCheckbox)
+        let voiceFocusRow = NSStackView()
+        voiceFocusRow.orientation = .horizontal
+        voiceFocusRow.alignment = .centerY
+        voiceFocusRow.widthAnchor.constraint(equalToConstant: 274).isActive = true
+        voiceFocusRow.addArrangedSubview(voiceFocusCheckbox)
+        mainStack.addArrangedSubview(voiceFocusRow)
         
         mainStack.addArrangedSubview(makeDivider())
         
@@ -246,7 +272,7 @@ class PopoverController: NSViewController {
         cbBox.layer?.cornerRadius = 8
         cbBox.layer?.backgroundColor = panelBackgroundColor().cgColor
         panelViews.append(cbBox)
-        cbBox.edgeInsets = NSEdgeInsets(top: 8, left: 12, bottom: 8, right: 12)
+        cbBox.edgeInsets = NSEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
         cbBox.widthAnchor.constraint(equalToConstant: 274).isActive = true
         
         cbStatusLabel = NSTextField(labelWithString: "\(L10n.text("clearBass")): +0")
@@ -257,7 +283,7 @@ class PopoverController: NSViewController {
         cbSlider.isContinuous = true
         cbSlider.numberOfTickMarks = 21
         cbSlider.allowsTickMarkValuesOnly = true
-        cbSlider.widthAnchor.constraint(equalToConstant: 250).isActive = true
+        cbSlider.widthAnchor.constraint(equalToConstant: 242).isActive = true
         
         cbBox.addArrangedSubview(cbStatusLabel)
         cbBox.addArrangedSubview(cbSlider)
@@ -270,7 +296,9 @@ class PopoverController: NSViewController {
         // ==========================================
         let footerStack = NSStackView()
         footerStack.orientation = .horizontal
+        footerStack.alignment = .centerY
         footerStack.widthAnchor.constraint(equalToConstant: 274).isActive = true
+        footerStack.heightAnchor.constraint(equalToConstant: 18).isActive = true
         
         let quitBtn = NSButton(title: L10n.text("quit"), target: self, action: #selector(onQuit))
         quitBtn.isBordered = false
@@ -281,36 +309,104 @@ class PopoverController: NSViewController {
         mainStack.addArrangedSubview(footerStack)
     }
     
-    func makeBatteryCard(title: String, imageName: String) -> (NSView, NSTextField) {
+    func makeBatteryCard(imageName: String, indicatorSymbolName: String?) -> (NSView, NSTextField, NSImageView) {
         let card = NSStackView()
         card.orientation = .vertical
         card.alignment = .centerX
-        card.spacing = 3
-        card.edgeInsets = NSEdgeInsets(top: 8, left: 4, bottom: 8, right: 4)
+        card.spacing = 2
+        card.edgeInsets = NSEdgeInsets(top: 4, left: 4, bottom: 4, right: 4)
+        card.heightAnchor.constraint(equalToConstant: 94).isActive = true
         card.wantsLayer = true
         card.layer?.cornerRadius = 6
         card.layer?.backgroundColor = panelBackgroundColor().cgColor
         panelViews.append(card)
         
-        let titleLabel = NSTextField(labelWithString: title)
-        titleLabel.font = NSFont.systemFont(ofSize: 9, weight: .medium)
-        titleLabel.textColor = .secondaryLabelColor
-        titleLabel.alignment = .center
+        let indicatorView = NSImageView()
+        indicatorView.image = indicatorSymbolName.flatMap {
+            NSImage(systemSymbolName: $0, accessibilityDescription: nil)
+        }
+        indicatorView.contentTintColor = indicatorSymbolName == "r.circle.fill" ? .systemRed : .labelColor
+        indicatorView.imageScaling = .scaleProportionallyUpOrDown
+        indicatorView.widthAnchor.constraint(equalToConstant: 14).isActive = true
+        indicatorView.heightAnchor.constraint(equalToConstant: 14).isActive = true
 
         let iconView = NSImageView()
-        iconView.image = ImageLoader.image(named: imageName, size: NSSize(width: 34, height: 34))
+        iconView.image = ImageLoader.image(named: imageName, size: NSSize(width: 40, height: 40))
         iconView.imageScaling = .scaleProportionallyUpOrDown
-        iconView.widthAnchor.constraint(equalToConstant: 34).isActive = true
-        iconView.heightAnchor.constraint(equalToConstant: 34).isActive = true
+        iconView.widthAnchor.constraint(equalToConstant: 40).isActive = true
+        iconView.heightAnchor.constraint(equalToConstant: 40).isActive = true
         
         let valueLabel = NSTextField(labelWithString: "%--")
-        valueLabel.font = NSFont.systemFont(ofSize: 13, weight: .bold)
+        valueLabel.font = NSFont.systemFont(ofSize: 11, weight: .medium)
         valueLabel.alignment = .center
+        valueLabel.heightAnchor.constraint(equalToConstant: 16).isActive = true
+
+        let batteryView = NSImageView()
+        batteryView.image = NSImage(systemSymbolName: "battery.100", accessibilityDescription: nil)
+        batteryView.contentTintColor = .labelColor
+        batteryView.imageScaling = .scaleProportionallyUpOrDown
+        batteryView.widthAnchor.constraint(equalToConstant: 18).isActive = true
+        batteryView.heightAnchor.constraint(equalToConstant: 14).isActive = true
+
+        let indicatorRow = NSStackView()
+        indicatorRow.orientation = .horizontal
+        indicatorRow.alignment = .centerY
+        indicatorRow.widthAnchor.constraint(equalToConstant: 78).isActive = true
+        indicatorRow.addArrangedSubview(indicatorView)
+
+        let statusStack = NSStackView()
+        statusStack.orientation = .horizontal
+        statusStack.alignment = .centerY
+        statusStack.spacing = 3
+
+        let batteryColumn = NSStackView()
+        batteryColumn.orientation = .vertical
+        batteryColumn.alignment = .centerX
+        batteryColumn.spacing = 0
+
+        if let indicatorSymbolName, indicatorSymbolName != "c.circle.fill" {
+            let bluetoothView = NSImageView()
+            bluetoothView.image = NSImage(systemSymbolName: "bluetooth", accessibilityDescription: nil)
+            bluetoothView.contentTintColor = .labelColor
+            bluetoothView.widthAnchor.constraint(equalToConstant: 14).isActive = true
+            bluetoothView.heightAnchor.constraint(equalToConstant: 14).isActive = true
+            statusStack.addArrangedSubview(bluetoothView)
+        }
+
+        batteryColumn.addArrangedSubview(batteryView)
+        batteryColumn.addArrangedSubview(valueLabel)
+        if indicatorSymbolName == "c.circle.fill" {
+            batteryColumn.widthAnchor.constraint(equalToConstant: 78).isActive = true
+        }
+        statusStack.addArrangedSubview(batteryColumn)
+
+        let statusRow = NSStackView()
+        statusRow.orientation = .horizontal
+        statusRow.widthAnchor.constraint(equalToConstant: 78).isActive = true
+        let statusLeadingSpacer = NSView()
+        let statusTrailingSpacer = NSView()
+        statusLeadingSpacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        statusTrailingSpacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        statusRow.addArrangedSubview(statusLeadingSpacer)
+        statusRow.addArrangedSubview(statusStack)
+        statusRow.addArrangedSubview(statusTrailingSpacer)
         
-        card.addArrangedSubview(titleLabel)
+        card.addArrangedSubview(indicatorRow)
         card.addArrangedSubview(iconView)
-        card.addArrangedSubview(valueLabel)
-        return (card, valueLabel)
+        card.addArrangedSubview(statusRow)
+        return (card, valueLabel, batteryView)
+    }
+
+    private func setBatteryIcon(_ imageView: NSImageView, level: Int, charging: Bool) {
+        let symbolName: String
+        switch level {
+        case 90...100: symbolName = charging ? "battery.100.bolt" : "battery.100"
+        case 65..<90: symbolName = charging ? "battery.75.bolt" : "battery.75"
+        case 35..<65: symbolName = charging ? "battery.50.bolt" : "battery.50"
+        case 10..<35: symbolName = charging ? "battery.25.bolt" : "battery.25"
+        default: symbolName = charging ? "battery.0.bolt" : "battery.0"
+        }
+        imageView.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: nil)
     }
 
     private func panelBackgroundColor() -> NSColor {
@@ -331,20 +427,32 @@ class PopoverController: NSViewController {
         bt.logDebug("syncUI called: isConnected=\(isConnected), ncMode=\(state.ncMode), masterSwitchCurrentState=\(masterSwitch.state == .on ? "ON" : "OFF")")
         if isConnected {
             statusTextLabel.stringValue = L10n.text("connected")
+            statusIconView.image = NSImage(systemSymbolName: "circle.fill", accessibilityDescription: nil)
+            statusIconView.contentTintColor = .systemGreen
         } else if bt.isConnecting {
             statusTextLabel.stringValue = L10n.text("connecting")
+            statusIconView.image = NSImage(systemSymbolName: "circle.dotted", accessibilityDescription: nil)
+            statusIconView.contentTintColor = .systemOrange
         } else {
             statusTextLabel.stringValue = L10n.text("disconnected")
+            statusIconView.image = NSImage(systemSymbolName: "circle.fill", accessibilityDescription: nil)
+            statusIconView.contentTintColor = .systemRed
         }
         
         if isConnected {
             leftBatLabel.stringValue = "%\(state.leftBattery)\(state.leftCharging ? " ⚡" : "")"
             rightBatLabel.stringValue = "%\(state.rightBattery)\(state.rightCharging ? " ⚡" : "")"
             caseBatLabel.stringValue = "%\(state.caseBattery)\(state.caseCharging ? " ⚡" : "")"
+            setBatteryIcon(leftBatteryIcon, level: state.leftBattery, charging: state.leftCharging)
+            setBatteryIcon(rightBatteryIcon, level: state.rightBattery, charging: state.rightCharging)
+            setBatteryIcon(caseBatteryIcon, level: state.caseBattery, charging: state.caseCharging)
         } else {
             leftBatLabel.stringValue = "%--"
             rightBatLabel.stringValue = "%--"
             caseBatLabel.stringValue = "%--"
+            [leftBatteryIcon, rightBatteryIcon, caseBatteryIcon].forEach {
+                $0?.image = NSImage(systemSymbolName: "battery.unknown", accessibilityDescription: nil)
+            }
         }
         
         let isControlOn = (state.ncMode != .off)
