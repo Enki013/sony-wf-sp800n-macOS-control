@@ -11,7 +11,7 @@ enum L10n {
             "refreshReconnect": ("Durumu Yenile / Yeniden Bağlan", "Refresh Status / Reconnect"),
             "controlPanel": ("Sony WF-SP800N Kontrol Paneli", "Sony WF-SP800N Control Panel"),
             "connected": ("Bağlı", "Connected"),
-            "connecting": ("🟡 Bağlanıyor...", "🟡 Connecting..."),
+            "connecting": ("Bağlanıyor...", "Connecting..."),
             "disconnected": ("Bağlı Değil", "Disconnected"),
             "leftEarbud": ("Sol Kulaklık", "Left Earbud"),
             "rightEarbud": ("Sağ Kulaklık", "Right Earbud"),

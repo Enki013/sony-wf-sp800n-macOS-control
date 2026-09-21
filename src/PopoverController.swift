@@ -432,7 +432,7 @@ class PopoverController: NSViewController {
         } else if bt.isConnecting {
             statusTextLabel.stringValue = L10n.text("connecting")
             statusIconView.image = NSImage(systemSymbolName: "circle.dotted", accessibilityDescription: nil)
-            statusIconView.contentTintColor = .systemOrange
+            statusIconView.contentTintColor = .systemYellow
         } else {
             statusTextLabel.stringValue = L10n.text("disconnected")
             statusIconView.image = NSImage(systemSymbolName: "circle.fill", accessibilityDescription: nil)
