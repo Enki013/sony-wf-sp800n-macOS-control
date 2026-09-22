@@ -21,6 +21,9 @@ class PopoverController: NSViewController {
     var leftBatteryIcon: NSImageView!
     var rightBatteryIcon: NSImageView!
     var caseBatteryIcon: NSImageView!
+    var leftChargingIcon: NSImageView!
+    var rightChargingIcon: NSImageView!
+    var caseChargingIcon: NSImageView!
     
     var masterSwitch: NSSwitch!
     var ncStatusLabel: NSTextField!
@@ -138,12 +141,15 @@ class PopoverController: NSViewController {
         let leftCard = makeBatteryCard(imageName: "wf_sp800n_color_00_01_left", indicatorSymbolName: "l.circle.fill")
         leftBatLabel = leftCard.1
         leftBatteryIcon = leftCard.2
+        leftChargingIcon = leftCard.3
         let rightCard = makeBatteryCard(imageName: "wf_sp800n_color_00_01_right", indicatorSymbolName: "r.circle.fill")
         rightBatLabel = rightCard.1
         rightBatteryIcon = rightCard.2
+        rightChargingIcon = rightCard.3
         let caseCard = makeBatteryCard(imageName: "wf_sp800n_color_00_01_cradle", indicatorSymbolName: "c.circle.fill")
         caseBatLabel = caseCard.1
         caseBatteryIcon = caseCard.2
+        caseChargingIcon = caseCard.3
         
         batStack.addArrangedSubview(leftCard.0)
         batStack.addArrangedSubview(rightCard.0)
@@ -309,13 +315,13 @@ class PopoverController: NSViewController {
         mainStack.addArrangedSubview(footerStack)
     }
     
-    func makeBatteryCard(imageName: String, indicatorSymbolName: String?) -> (NSView, NSTextField, NSImageView) {
+    func makeBatteryCard(imageName: String, indicatorSymbolName: String?) -> (NSView, NSTextField, NSImageView, NSImageView) {
         let card = NSStackView()
         card.orientation = .vertical
         card.alignment = .centerX
-        card.spacing = 2
-        card.edgeInsets = NSEdgeInsets(top: 4, left: 4, bottom: 4, right: 4)
-        card.heightAnchor.constraint(equalToConstant: 94).isActive = true
+        card.spacing = 4
+        card.edgeInsets = NSEdgeInsets(top: 6, left: 4, bottom: 2, right: 4)
+        card.heightAnchor.constraint(equalToConstant: 90).isActive = true
         card.wantsLayer = true
         card.layer?.cornerRadius = 6
         card.layer?.backgroundColor = panelBackgroundColor().cgColor
@@ -331,10 +337,10 @@ class PopoverController: NSViewController {
         indicatorView.heightAnchor.constraint(equalToConstant: 14).isActive = true
 
         let iconView = NSImageView()
-        iconView.image = ImageLoader.image(named: imageName, size: NSSize(width: 40, height: 40))
+        iconView.image = ImageLoader.image(named: imageName, size: NSSize(width: 44, height: 44))
         iconView.imageScaling = .scaleProportionallyUpOrDown
-        iconView.widthAnchor.constraint(equalToConstant: 40).isActive = true
-        iconView.heightAnchor.constraint(equalToConstant: 40).isActive = true
+        iconView.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        iconView.heightAnchor.constraint(equalToConstant: 44).isActive = true
         
         let valueLabel = NSTextField(labelWithString: "%--")
         valueLabel.font = NSFont.systemFont(ofSize: 11, weight: .medium)
@@ -345,12 +351,30 @@ class PopoverController: NSViewController {
         batteryView.image = NSImage(systemSymbolName: "battery.100", accessibilityDescription: nil)
         batteryView.contentTintColor = .labelColor
         batteryView.imageScaling = .scaleProportionallyUpOrDown
-        batteryView.widthAnchor.constraint(equalToConstant: 18).isActive = true
-        batteryView.heightAnchor.constraint(equalToConstant: 14).isActive = true
+        batteryView.widthAnchor.constraint(equalToConstant: 20).isActive = true
+        batteryView.heightAnchor.constraint(equalToConstant: 15).isActive = true
+
+        let chargingView = NSImageView()
+        chargingView.image = NSImage(systemSymbolName: "bolt.fill", accessibilityDescription: nil)
+        chargingView.contentTintColor = .systemOrange
+        chargingView.imageScaling = .scaleProportionallyUpOrDown
+        chargingView.translatesAutoresizingMaskIntoConstraints = false
+        chargingView.widthAnchor.constraint(equalToConstant: 8).isActive = true
+        chargingView.heightAnchor.constraint(equalToConstant: 8).isActive = true
+        chargingView.alphaValue = 1
+        chargingView.isHidden = true
+        batteryView.addSubview(chargingView)
+        batteryView.wantsLayer = true
+        batteryView.layer?.masksToBounds = true
+        NSLayoutConstraint.activate([
+            chargingView.centerXAnchor.constraint(equalTo: batteryView.centerXAnchor),
+            chargingView.centerYAnchor.constraint(equalTo: batteryView.centerYAnchor)
+        ])
 
         let indicatorRow = NSStackView()
         indicatorRow.orientation = .horizontal
         indicatorRow.alignment = .centerY
+        indicatorRow.translatesAutoresizingMaskIntoConstraints = false
         indicatorRow.widthAnchor.constraint(equalToConstant: 78).isActive = true
         indicatorRow.addArrangedSubview(indicatorView)
 
@@ -391,22 +415,28 @@ class PopoverController: NSViewController {
         statusRow.addArrangedSubview(statusStack)
         statusRow.addArrangedSubview(statusTrailingSpacer)
         
-        card.addArrangedSubview(indicatorRow)
+        card.addSubview(indicatorRow)
+        NSLayoutConstraint.activate([
+            indicatorRow.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 4),
+            indicatorRow.topAnchor.constraint(equalTo: card.topAnchor, constant: 4),
+            indicatorRow.heightAnchor.constraint(equalToConstant: 14)
+        ])
         card.addArrangedSubview(iconView)
         card.addArrangedSubview(statusRow)
-        return (card, valueLabel, batteryView)
+        return (card, valueLabel, batteryView, chargingView)
     }
 
-    private func setBatteryIcon(_ imageView: NSImageView, level: Int, charging: Bool) {
+    private func setBatteryIcon(_ imageView: NSImageView, chargingView: NSImageView, level: Int, charging: Bool) {
         let symbolName: String
         switch level {
-        case 90...100: symbolName = charging ? "battery.100.bolt" : "battery.100"
-        case 65..<90: symbolName = charging ? "battery.75.bolt" : "battery.75"
-        case 35..<65: symbolName = charging ? "battery.50.bolt" : "battery.50"
-        case 10..<35: symbolName = charging ? "battery.25.bolt" : "battery.25"
-        default: symbolName = charging ? "battery.0.bolt" : "battery.0"
+        case 90...100: symbolName = "battery.100"
+        case 65..<90: symbolName = "battery.75"
+        case 35..<65: symbolName = "battery.50"
+        case 10..<35: symbolName = "battery.25"
+        default: symbolName = "battery.0"
         }
         imageView.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: nil)
+        chargingView.isHidden = !charging
     }
 
     private func panelBackgroundColor() -> NSColor {
@@ -440,12 +470,12 @@ class PopoverController: NSViewController {
         }
         
         if isConnected {
-            leftBatLabel.stringValue = "%\(state.leftBattery)\(state.leftCharging ? " ⚡" : "")"
-            rightBatLabel.stringValue = "%\(state.rightBattery)\(state.rightCharging ? " ⚡" : "")"
-            caseBatLabel.stringValue = "%\(state.caseBattery)\(state.caseCharging ? " ⚡" : "")"
-            setBatteryIcon(leftBatteryIcon, level: state.leftBattery, charging: state.leftCharging)
-            setBatteryIcon(rightBatteryIcon, level: state.rightBattery, charging: state.rightCharging)
-            setBatteryIcon(caseBatteryIcon, level: state.caseBattery, charging: state.caseCharging)
+            leftBatLabel.stringValue = "%\(state.leftBattery)"
+            rightBatLabel.stringValue = "%\(state.rightBattery)"
+            caseBatLabel.stringValue = "%\(state.caseBattery)"
+            setBatteryIcon(leftBatteryIcon, chargingView: leftChargingIcon, level: state.leftBattery, charging: state.leftCharging)
+            setBatteryIcon(rightBatteryIcon, chargingView: rightChargingIcon, level: state.rightBattery, charging: state.rightCharging)
+            setBatteryIcon(caseBatteryIcon, chargingView: caseChargingIcon, level: state.caseBattery, charging: state.caseCharging)
         } else {
             leftBatLabel.stringValue = "%--"
             rightBatLabel.stringValue = "%--"
@@ -453,6 +483,7 @@ class PopoverController: NSViewController {
             [leftBatteryIcon, rightBatteryIcon, caseBatteryIcon].forEach {
                 $0?.image = NSImage(systemSymbolName: "battery.unknown", accessibilityDescription: nil)
             }
+            [leftChargingIcon, rightChargingIcon, caseChargingIcon].forEach { $0?.isHidden = true }
         }
         
         let isControlOn = (state.ncMode != .off)
