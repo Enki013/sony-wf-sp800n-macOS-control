@@ -27,6 +27,7 @@ class PopoverController: NSViewController {
     
     var masterSwitch: NSSwitch!
     var ncStatusLabel: NSTextField!
+    var ncModeIconView: NSImageView!
     var ncSlider: NSSlider!
     var voiceFocusCheckbox: NSButton!
     
@@ -196,6 +197,20 @@ class PopoverController: NSViewController {
         ncStatusLabel = NSTextField(labelWithString: L10n.text("noiseCancelling"))
         ncStatusLabel.font = NSFont.systemFont(ofSize: 12, weight: .semibold)
         ncStatusLabel.textColor = .systemBlue
+
+        ncModeIconView = NSImageView()
+        ncModeIconView.image = NSImage(systemSymbolName: "waveform.slash", accessibilityDescription: nil)
+        ncModeIconView.contentTintColor = .systemBlue
+        ncModeIconView.imageScaling = .scaleProportionallyUpOrDown
+        ncModeIconView.widthAnchor.constraint(equalToConstant: 14).isActive = true
+        ncModeIconView.heightAnchor.constraint(equalToConstant: 14).isActive = true
+
+        let ncStatusRow = NSStackView()
+        ncStatusRow.orientation = .horizontal
+        ncStatusRow.alignment = .centerY
+        ncStatusRow.spacing = 4
+        ncStatusRow.addArrangedSubview(ncModeIconView)
+        ncStatusRow.addArrangedSubview(ncStatusLabel)
         
         ncSlider = NSSlider(value: 0, minValue: 0, maxValue: 20, target: self, action: #selector(onNCSliderMoved(_:)))
         ncSlider.isContinuous = true
@@ -218,7 +233,7 @@ class PopoverController: NSViewController {
         sliderLabels.addArrangedSubview(spacerLabels)
         sliderLabels.addArrangedSubview(lblMax)
         
-        sliderContainer.addArrangedSubview(ncStatusLabel)
+        sliderContainer.addArrangedSubview(ncStatusRow)
         sliderContainer.addArrangedSubview(ncSlider)
         sliderContainer.addArrangedSubview(sliderLabels)
         
@@ -319,9 +334,9 @@ class PopoverController: NSViewController {
         let card = NSStackView()
         card.orientation = .vertical
         card.alignment = .centerX
-        card.spacing = 4
-        card.edgeInsets = NSEdgeInsets(top: 6, left: 4, bottom: 2, right: 4)
-        card.heightAnchor.constraint(equalToConstant: 90).isActive = true
+        card.spacing = 2
+        card.edgeInsets = NSEdgeInsets(top: 4, left: 4, bottom: 4, right: 4)
+        card.heightAnchor.constraint(equalToConstant: 94).isActive = true
         card.wantsLayer = true
         card.layer?.cornerRadius = 6
         card.layer?.backgroundColor = panelBackgroundColor().cgColor
@@ -337,10 +352,10 @@ class PopoverController: NSViewController {
         indicatorView.heightAnchor.constraint(equalToConstant: 14).isActive = true
 
         let iconView = NSImageView()
-        iconView.image = ImageLoader.image(named: imageName, size: NSSize(width: 44, height: 44))
+        iconView.image = ImageLoader.image(named: imageName, size: NSSize(width: 40, height: 40))
         iconView.imageScaling = .scaleProportionallyUpOrDown
-        iconView.widthAnchor.constraint(equalToConstant: 44).isActive = true
-        iconView.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        iconView.widthAnchor.constraint(equalToConstant: 40).isActive = true
+        iconView.heightAnchor.constraint(equalToConstant: 40).isActive = true
         
         let valueLabel = NSTextField(labelWithString: "%--")
         valueLabel.font = NSFont.systemFont(ofSize: 11, weight: .medium)
@@ -351,8 +366,8 @@ class PopoverController: NSViewController {
         batteryView.image = NSImage(systemSymbolName: "battery.100", accessibilityDescription: nil)
         batteryView.contentTintColor = .labelColor
         batteryView.imageScaling = .scaleProportionallyUpOrDown
-        batteryView.widthAnchor.constraint(equalToConstant: 20).isActive = true
-        batteryView.heightAnchor.constraint(equalToConstant: 15).isActive = true
+        batteryView.widthAnchor.constraint(equalToConstant: 18).isActive = true
+        batteryView.heightAnchor.constraint(equalToConstant: 14).isActive = true
 
         let chargingView = NSImageView()
         chargingView.image = NSImage(systemSymbolName: "bolt.fill", accessibilityDescription: nil)
@@ -415,12 +430,7 @@ class PopoverController: NSViewController {
         statusRow.addArrangedSubview(statusStack)
         statusRow.addArrangedSubview(statusTrailingSpacer)
         
-        card.addSubview(indicatorRow)
-        NSLayoutConstraint.activate([
-            indicatorRow.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 4),
-            indicatorRow.topAnchor.constraint(equalTo: card.topAnchor, constant: 4),
-            indicatorRow.heightAnchor.constraint(equalToConstant: 14)
-        ])
+        card.addArrangedSubview(indicatorRow)
         card.addArrangedSubview(iconView)
         card.addArrangedSubview(statusRow)
         return (card, valueLabel, batteryView, chargingView)
@@ -495,6 +505,8 @@ class PopoverController: NSViewController {
         if !isControlOn {
             ncStatusLabel.stringValue = "\(L10n.text("off")) (\(L10n.text("passiveIsolation")))"
             ncStatusLabel.textColor = .secondaryLabelColor
+            ncModeIconView.image = NSImage(systemSymbolName: "waveform.slash", accessibilityDescription: nil)
+            ncModeIconView.contentTintColor = .secondaryLabelColor
             voiceFocusCheckbox.isEnabled = false
             voiceFocusCheckbox.state = state.voiceFocus ? .on : .off
         } else if state.ncMode == .anc {
@@ -502,6 +514,8 @@ class PopoverController: NSViewController {
                 ncSlider.doubleValue = 0
                 ncStatusLabel.stringValue = L10n.text("noiseCancelling")
                 ncStatusLabel.textColor = .systemBlue
+                ncModeIconView.image = NSImage(systemSymbolName: "waveform.slash", accessibilityDescription: nil)
+                ncModeIconView.contentTintColor = .systemBlue
                 voiceFocusCheckbox.isEnabled = false
                 voiceFocusCheckbox.state = .off
             }
@@ -510,6 +524,8 @@ class PopoverController: NSViewController {
                 ncSlider.doubleValue = Double(state.ambientLevel)
                 ncStatusLabel.stringValue = "\(L10n.text("ambientSound")): \(L10n.text("level")) \(state.ambientLevel)"
                 ncStatusLabel.textColor = .systemPurple
+                ncModeIconView.image = NSImage(systemSymbolName: "ear.and.waveform", accessibilityDescription: nil)
+                ncModeIconView.contentTintColor = .systemPurple
                 voiceFocusCheckbox.isEnabled = isConnected
                 voiceFocusCheckbox.state = state.voiceFocus ? .on : .off
             }
@@ -557,11 +573,15 @@ class PopoverController: NSViewController {
         if val == 0 {
             ncStatusLabel.stringValue = L10n.text("noiseCancelling")
             ncStatusLabel.textColor = .systemBlue
+            ncModeIconView.image = NSImage(systemSymbolName: "waveform.slash", accessibilityDescription: nil)
+            ncModeIconView.contentTintColor = .systemBlue
             voiceFocusCheckbox.isEnabled = false
             voiceFocusCheckbox.state = .off
         } else {
             ncStatusLabel.stringValue = "\(L10n.text("ambientSound")): \(L10n.text("level")) \(val)"
             ncStatusLabel.textColor = .systemPurple
+            ncModeIconView.image = NSImage(systemSymbolName: "ear.and.waveform", accessibilityDescription: nil)
+            ncModeIconView.contentTintColor = .systemPurple
             voiceFocusCheckbox.isEnabled = true
         }
         
